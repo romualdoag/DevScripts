@@ -20,6 +20,7 @@ var_unprivileged="${var_unprivileged:-1}"
 export var_rttys_admin_name="${var_rttys_admin_name:-}"
 export var_rttys_pass="${var_rttys_pass:-}"
 export var_glkvm_access_ip="${var_glkvm_access_ip:-}"
+export var_glkvm_version="${var_glkvm_version:-}"
 
 header_info "$APP"
 variables
@@ -36,12 +37,25 @@ function update_script() {
     exit
   fi
 
-  if check_for_gh_tag "glkvm-cloud" "gl-inet/glkvm-cloud"; then
+  UPDATE_AVAILABLE=no
+  if [[ -n "${var_glkvm_version:-}" ]]; then
+    UPDATE_AVAILABLE=yes
+    msg_info "Pinned version requested: ${var_glkvm_version}"
+  elif check_for_gh_tag "glkvm-cloud" "gl-inet/glkvm-cloud"; then
+    UPDATE_AVAILABLE=yes
+  fi
+  if [[ "$UPDATE_AVAILABLE" == yes ]]; then
     msg_info "Stopping Services"
     systemctl stop glkvm-cloud glkvm-coturn
     msg_ok "Stopped Services"
 
-    CLEAN_INSTALL=1 fetch_and_deploy_gh_tag "glkvm-cloud" "gl-inet/glkvm-cloud"
+    create_backup /opt/glkvm-cloud-data
+
+    if [[ -n "${var_glkvm_version:-}" ]]; then
+      CLEAN_INSTALL=1 fetch_and_deploy_gh_tag "glkvm-cloud" "gl-inet/glkvm-cloud" "$var_glkvm_version"
+    else
+      CLEAN_INSTALL=1 fetch_and_deploy_gh_tag "glkvm-cloud" "gl-inet/glkvm-cloud"
+    fi
 
     GO_VERSION="$(grep -m1 '^go ' /opt/glkvm-cloud/go.mod | awk '{print $2}')" setup_go
     NODE_VERSION="24" NODE_MODULE="yarn" setup_nodejs
@@ -60,6 +74,7 @@ function update_script() {
     msg_ok "Built GLKVM Cloud service"
 
     msg_info "Updating configuration"
+    # Seed only: existing databases are never touched; fresh installs fetch the current tree first
     if [[ ! -f /opt/glkvm-cloud-data/database/schema.sql ]]; then
       cp /opt/glkvm-cloud/internal/store/sqlite/schema.sql /opt/glkvm-cloud-data/database/schema.sql
     fi
@@ -126,6 +141,8 @@ device-access-host: ${DEVICE_ACCESS_HOST}
 EOF
     cat <<EOF >/opt/glkvm-cloud-data/turnserver.conf
 listening-port=${TURN_PORT}
+min-port=49160
+max-port=49200
 lt-cred-mech
 user=${TURN_USER}:${TURN_PASS}
 realm=glkvm

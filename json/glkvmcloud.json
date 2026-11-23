@@ -17,7 +17,7 @@
   "documentation": "https://github.com/gl-inet/glkvm-cloud",
   "website": "https://github.com/gl-inet/glkvm-cloud",
   "repository": "https://github.com/gl-inet/glkvm-cloud",
-  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/glkvmcloud.webp",
+  "logo": "https://raw.githubusercontent.com/gl-inet/glkvm-cloud/main/ui/src/assets/svg/logo.svg",
   "description": "GLKVM Cloud lets individuals and small businesses manage GL.iNet KVM devices remotely from their own server. It supports access-code onboarding, in-browser remote control, batch commands, and LDAP/OIDC sign-in, keeping data and bandwidth under your control.",
   "install_methods": [
     {
@@ -56,7 +56,13 @@
       "name": "var_glkvm_access_ip",
       "label": "Server Access IP",
       "type": "text",
-      "help": "Public IP by default; set the internal IP when devices are on the local network"
+      "help": "Container IP by default; set the public IP when devices reach it over the internet"
+    },
+    {
+      "name": "var_glkvm_version",
+      "label": "Upstream Tag Pin",
+      "type": "text",
+      "help": "Empty builds the latest tag; set e.g. v3.0.0 to pin or roll back"
     }
   ],
   "notes": [
@@ -69,8 +75,12 @@
       "type": "info"
     },
     {
-      "text": "Allow ports 443, 10443, 5915 and 3478 (TCP and UDP) toward the container. KVM devices need firmware v1.11.0 or later for access-code onboarding.",
+      "text": "Allow ports 443, 10443, 5915 and 3478 (TCP and UDP) toward the container. TURN relay uses UDP 49160-49200, allow that range too behind NAT. Port 5912 serves only pre-v1.11 firmware (legacy token); block it once all devices use access codes. KVM devices need firmware v1.11.0 or later for access-code onboarding.",
       "type": "info"
+    },
+    {
+      "text": "Before onboarding KVMs, triage each device for the CSA-2026-01 implant (gl-helper-triage.sh), factory-reset if indicated, and disable GoodCloud/AstroWarp on migrated devices.",
+      "type": "warning"
     }
   ]
 }

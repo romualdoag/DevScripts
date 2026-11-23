@@ -25,7 +25,11 @@ $STD apt install -y \
   sqlite3
 msg_ok "Installed Dependencies"
 
-fetch_and_deploy_gh_tag "glkvm-cloud" "gl-inet/glkvm-cloud"
+if [[ -n "${var_glkvm_version:-}" ]]; then
+  fetch_and_deploy_gh_tag "glkvm-cloud" "gl-inet/glkvm-cloud" "$var_glkvm_version"
+else
+  fetch_and_deploy_gh_tag "glkvm-cloud" "gl-inet/glkvm-cloud"
+fi
 
 GO_VERSION="$(grep -m1 '^go ' /opt/glkvm-cloud/go.mod | awk '{print $2}')" setup_go
 NODE_VERSION="24" NODE_MODULE="yarn" setup_nodejs
@@ -45,12 +49,13 @@ msg_ok "Built GLKVM Cloud service"
 
 msg_info "Configuring GLKVM Cloud"
 mkdir -p /opt/glkvm-cloud-data/database /opt/glkvm-cloud-data/certificate
+# Seed only: existing databases are never touched; fresh installs fetch the current tree first
 if [[ ! -f /opt/glkvm-cloud-data/database/schema.sql ]]; then
   cp /opt/glkvm-cloud/internal/store/sqlite/schema.sql /opt/glkvm-cloud-data/database/schema.sql
 fi
 var_rttys_admin_name="${var_rttys_admin_name:-admin}"
 var_rttys_pass="${var_rttys_pass:-$(random_password 32)}"
-var_glkvm_access_ip="${var_glkvm_access_ip:-$(curl -fsS --max-time 5 https://api.ipify.org 2>/dev/null || echo "$LOCAL_IP")}"
+var_glkvm_access_ip="${var_glkvm_access_ip:-${LOCAL_IP:-$(curl -fsS --max-time 5 https://api.ipify.org 2>/dev/null || echo "127.0.0.1")}}"
 cat <<EOF >/opt/glkvm-cloud-data/.env
 GLKVM_ACCESS_IP=${var_glkvm_access_ip}
 RTTYS_TOKEN=$(random_password 32)
@@ -142,6 +147,8 @@ device-access-host: ${DEVICE_ACCESS_HOST}
 EOF
 cat <<EOF >/opt/glkvm-cloud-data/turnserver.conf
 listening-port=${TURN_PORT}
+min-port=49160
+max-port=49200
 lt-cred-mech
 user=${TURN_USER}:${TURN_PASS}
 realm=glkvm
