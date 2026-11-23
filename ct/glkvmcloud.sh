@@ -21,6 +21,11 @@ export var_rttys_admin_name="${var_rttys_admin_name:-}"
 export var_rttys_pass="${var_rttys_pass:-}"
 export var_glkvm_access_ip="${var_glkvm_access_ip:-}"
 export var_glkvm_version="${var_glkvm_version:-}"
+# Public URL / device endpoint domain for tunnel/reverse-proxy use.
+# Empty = direct LAN-IP access; WEB_UI_HOST stays unset on purpose so the
+# UI keeps answering on both the LAN IP and the public hostname.
+export var_glkvm_public_url="${var_glkvm_public_url:-}"
+export var_glkvm_endpoint_host="${var_glkvm_endpoint_host:-}"
 
 header_info "$APP"
 variables

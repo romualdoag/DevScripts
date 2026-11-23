@@ -63,6 +63,18 @@
       "label": "Upstream Tag Pin",
       "type": "text",
       "help": "Empty builds the latest tag; set e.g. v3.0.0 to pin or roll back"
+    },
+    {
+      "name": "var_glkvm_public_url",
+      "label": "Public URL",
+      "type": "text",
+      "help": "Empty for direct LAN-IP access; set https://glkvm.example.com when serving through a tunnel or reverse proxy"
+    },
+    {
+      "name": "var_glkvm_endpoint_host",
+      "label": "Device Endpoint Domain",
+      "type": "text",
+      "help": "Base domain for per-device URLs (device-id.your-domain); requires a wildcard DNS record pointing at the tunnel or proxy"
     }
   ],
   "notes": [
